@@ -25,7 +25,7 @@ type Validate interface {
 func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middleware.TranslatorMiddleware) (Validate, error) {
 	v := validator.New()
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
-		name := strings.SplitN(field.Tag.Get("name"), ",", 2)[0]
+		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
 		if name == "-" {
 			return ""
 		}
