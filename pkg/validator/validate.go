@@ -1,12 +1,9 @@
 package validator
 
 import (
-	"context"
 	"fmt"
 	"reflect"
 	"strings"
-
-	"github.com/VulpesFerrilata/library/pkg/errors"
 
 	"github.com/VulpesFerrilata/library/pkg/middleware"
 	"github.com/go-playground/locales/en"
@@ -15,14 +12,7 @@ import (
 	en_translations "gopkg.in/go-playground/validator.v9/translations/en"
 )
 
-type Validate interface {
-	Struct(ctx context.Context, s interface{}) error
-	StructExcept(ctx context.Context, s interface{}, fields ...string) error
-	StructPartial(ctx context.Context, s interface{}, fields ...string) error
-	Var(ctx context.Context, field interface{}, tag string) error
-}
-
-func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middleware.TranslatorMiddleware) (Validate, error) {
+func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middleware.TranslatorMiddleware) (*validator.Validate, error) {
 	v := validator.New()
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
 		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
@@ -41,48 +31,5 @@ func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middlewar
 		return nil, err
 	}
 
-	return &validate{
-		Validate:             v,
-		translatorMiddleware: translatorMiddleware,
-	}, nil
-}
-
-type validate struct {
-	*validator.Validate
-	translatorMiddleware *middleware.TranslatorMiddleware
-}
-
-func (v validate) Struct(ctx context.Context, s interface{}) error {
-	return v.parseError(ctx, v.Validate.Struct(s))
-}
-
-func (v validate) StructExcept(ctx context.Context, s interface{}, fields ...string) error {
-	return v.parseError(ctx, v.Validate.StructExcept(s, fields...))
-}
-
-func (v validate) StructPartial(ctx context.Context, s interface{}, fields ...string) error {
-	return v.parseError(ctx, v.Validate.StructPartial(s, fields...))
-}
-
-func (v validate) Var(ctx context.Context, field interface{}, tag string) error {
-	return v.parseError(ctx, v.Validate.Var(field, tag))
-}
-
-func (v validate) parseError(ctx context.Context, err error) error {
-	trans := v.translatorMiddleware.Get(ctx)
-
-	if err != nil {
-		fieldErrs, ok := err.(validator.ValidationErrors)
-		if !ok {
-			return err
-		}
-
-		validationErr := errors.NewValidationError()
-		for _, fieldErr := range fieldErrs {
-			validationErr.WithFieldError(fieldErr.Translate(trans))
-		}
-		return validationErr
-	}
-
-	return nil
+	return v, nil
 }

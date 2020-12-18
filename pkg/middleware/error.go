@@ -3,6 +3,7 @@ package middleware
 import (
 	"context"
 
+	"github.com/VulpesFerrilata/library/pkg/app_errors"
 	"github.com/VulpesFerrilata/library/pkg/errors"
 	"github.com/kataras/iris/v12"
 	"github.com/micro/go-micro/v2/server"
@@ -12,21 +13,22 @@ import (
 func NewErrorMiddleware(translatorMiddleware *TranslatorMiddleware) *ErrorMiddleware {
 	return &ErrorMiddleware{
 		translatorMiddleware: translatorMiddleware,
-		errorHandler:         newErrorHandler(translatorMiddleware),
 	}
 }
 
 type ErrorMiddleware struct {
 	translatorMiddleware *TranslatorMiddleware
-	errorHandler         errorHandler
 }
 
 func (em ErrorMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
 	return func(ctx context.Context, req server.Request, rsp interface{}) error {
 		err := f(ctx, req, rsp)
-		if err, ok := err.(errors.Error); ok {
+		if err, ok := err.(app_errors.GrpcError); ok {
 			trans := em.translatorMiddleware.Get(ctx)
-			stt := err.ToStatus(trans)
+			stt, err := err.Status(trans)
+			if err != nil {
+				return err
+			}
 			return stt.Err()
 		}
 		return err
@@ -37,7 +39,28 @@ func (em ErrorMiddleware) ErrorHandler(ctx iris.Context, err error) {
 	if err == nil {
 		return
 	}
-	em.errorHandler.handle(ctx, err)
+
+	if stt, ok := status.FromError(err); ok {
+		err = app_errors.NewStatusError(stt)
+	}
+
+	if err, ok := err.(app_errors.WebError); ok {
+		trans := em.translatorMiddleware.Get(ctx.Request().Context())
+		problem, err := err.Problem(trans)
+		if err != nil {
+			em.ErrorHandler(ctx, err)
+			return
+		}
+		ctx.Problem(problem)
+		return
+	}
+
+	problem := iris.NewProblem()
+	problem.Type("about:blank")
+	problem.Status(iris.StatusInternalServerError)
+	problem.Title("internal server error")
+	problem.Detail(err.Error())
+	ctx.Problem(problem)
 }
 
 func newErrorHandler(translatorMiddleware *TranslatorMiddleware) errorHandler {
