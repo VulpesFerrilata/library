@@ -6,5 +6,6 @@ import (
 )
 
 type WebError interface {
+	error
 	Problem(trans ut.Translator) (iris.Problem, error)
 }

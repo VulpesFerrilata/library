@@ -6,5 +6,6 @@ import (
 )
 
 type GrpcError interface {
+	error
 	Status(trans ut.Translator) (*status.Status, error)
 }

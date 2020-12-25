@@ -1,8 +1,6 @@
 package app_errors
 
 import (
-	"errors"
-
 	ut "github.com/go-playground/universal-translator"
 	"github.com/kataras/iris/v12"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
@@ -11,9 +9,9 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-var (
-	ErrInvalidStatusCode error = errors.New("invalid status code")
-)
+type StatusError interface {
+	GRPCStatus() *status.Status
+}
 
 func NewStatusError(stt *status.Status) WebError {
 	return &statusError{
@@ -23,6 +21,10 @@ func NewStatusError(stt *status.Status) WebError {
 
 type statusError struct {
 	stt *status.Status
+}
+
+func (se *statusError) Error() string {
+	return se.stt.Err().Error()
 }
 
 func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
@@ -43,15 +45,13 @@ func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 			return nil, err
 		}
 		problem.Title(title)
-	case codes.Internal:
+	default:
 		problem.Status(iris.StatusInternalServerError)
-		title, err := trans.T("internal-server-error")
+		title, err := trans.T("grpc-error", se.stt.Code().String())
 		if err != nil {
 			return nil, err
 		}
 		problem.Title(title)
-	default:
-		return nil, ErrInvalidStatusCode
 	}
 	problem.Detail(se.stt.Message())
 

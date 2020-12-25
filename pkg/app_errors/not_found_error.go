@@ -48,3 +48,7 @@ func (nfe notFoundError) Status(trans ut.Translator) (*status.Status, error) {
 	stt := status.New(codes.NotFound, detail)
 	return stt, nil
 }
+
+func (nfe notFoundError) Message(trans ut.Translator) (string, error) {
+	return trans.T("not-found-error-detail", nfe.name)
+}

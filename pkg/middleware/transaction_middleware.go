@@ -60,7 +60,10 @@ func (tm TransactionMiddleware) HandlerWrapperWithTxOptions(opts *sql.TxOptions)
 	}
 }
 
-func (tm TransactionMiddleware) Get(ctx context.Context) (*gorm.DB, bool) {
-	tx, found := ctx.Value(transactionKey{}).(*gorm.DB)
-	return tx, found
+func (tm TransactionMiddleware) Get(ctx context.Context) *gorm.DB {
+	tx, ok := ctx.Value(transactionKey{}).(*gorm.DB)
+	if !ok {
+		return tm.db
+	}
+	return tx
 }

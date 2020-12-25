@@ -1,7 +1,6 @@
 package app_errors
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"strings"
@@ -43,16 +42,17 @@ type validationError struct {
 	fieldErrors    validator.ValidationErrors
 }
 
-func (ve *validationError) Error() string {
-	buff := bytes.NewBufferString("")
+func (ve validationError) Error() string {
+	builder := new(strings.Builder)
 
-	buff.WriteString(fmt.Sprintf("one or more fields in %s %s contain invalid data", ve.name, ve.validationType.String()))
-	buff.WriteString(ve.fieldErrors.Error())
+	builder.WriteString(fmt.Sprintf("one or more fields in %s %s contain invalid data", ve.name, ve.validationType.String()))
+	builder.WriteString("\n")
+	builder.WriteString(ve.fieldErrors.Error())
 
-	return strings.TrimSpace(buff.String())
+	return strings.TrimSpace(builder.String())
 }
 
-func (ve *validationError) Problem(trans ut.Translator) (iris.Problem, error) {
+func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 
@@ -74,15 +74,28 @@ func (ve *validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	default:
 		return nil, ErrInvalidValidationType
 	}
-	detail, _ := trans.T("validation-error-detail", ve.name, ve.validationType.String())
+
+	detail, err := trans.T("validation-error-detail", ve.name, ve.validationType.String())
+	if err != nil {
+		return nil, err
+	}
 	problem.Detail(detail)
-	fieldErrors := ve.fieldErrors.Translate(trans)
-	problem.Key("errors", fieldErrors)
+
+	var errors []string
+	for _, fieldError := range ve.fieldErrors {
+		fieldErrorTrans := fieldError.Translate(trans)
+		errors = append(errors, fieldErrorTrans)
+	}
+	problem.Key("errors", errors)
+
 	return problem, nil
 }
 
-func (ve *validationError) Status(trans ut.Translator) (*status.Status, error) {
-	detail, _ := trans.T("validation-error-detail", ve.name, ve.validationType.String())
+func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
+	detail, err := trans.T("validation-error-detail", ve.name, ve.validationType.String())
+	if err != nil {
+		return nil, err
+	}
 	var code codes.Code
 	switch ve.validationType {
 	case InputValidation:
@@ -100,8 +113,20 @@ func (ve *validationError) Status(trans ut.Translator) (*status.Status, error) {
 			Field:       namespace,
 			Description: fieldError,
 		}
+
 		badRequest.FieldViolations = append(badRequest.FieldViolations, fieldViolation)
 	}
 
 	return stt.WithDetails(badRequest)
+}
+
+func (ve validationError) Message(trans ut.Translator) (string, error) {
+	builder := new(strings.Builder)
+
+	for _, fieldError := range ve.fieldErrors {
+		builder.WriteString(fieldError.Translate(trans))
+		builder.WriteString("\n")
+	}
+
+	return builder.String(), nil
 }

@@ -4,4 +4,5 @@ type AppError interface {
 	error
 	WebError
 	GrpcError
+	WebsocketError
 }
