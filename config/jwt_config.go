@@ -1,6 +1,9 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/pkg/errors"
+	"github.com/spf13/viper"
+)
 
 const jwtConfigFilename = "jwt-config"
 
@@ -17,9 +20,14 @@ func NewJwtConfig() (*JwtConfig, error) {
 	v.AddConfigPath("./")
 	v.AddConfigPath("./config")
 	viper.AutomaticEnv()
+
 	if err := v.ReadInConfig(); err != nil {
-		return jwtCfg, err
+		return nil, errors.Wrap(err, "config.NewJwtConfig")
 	}
 
-	return jwtCfg, v.Unmarshal(jwtCfg)
+	if err := v.Unmarshal(jwtCfg); err != nil {
+		return nil, errors.Wrap(err, "config.NewJwtConfig")
+	}
+
+	return jwtCfg, nil
 }

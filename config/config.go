@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
 
@@ -19,9 +20,14 @@ func NewConfig() (*Config, error) {
 	v.AddConfigPath("./")
 	v.AddConfigPath("./config")
 	viper.AutomaticEnv()
+
 	if err := v.ReadInConfig(); err != nil {
-		return cfg, err
+		return nil, errors.Wrap(err, "config.NewConfig")
 	}
 
-	return cfg, v.Unmarshal(cfg)
+	if err := v.Unmarshal(cfg); err != nil {
+		return nil, errors.Wrap(err, "config.NewConfig")
+	}
+
+	return cfg, nil
 }

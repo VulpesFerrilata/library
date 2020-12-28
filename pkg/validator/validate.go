@@ -8,6 +8,7 @@ import (
 	"github.com/VulpesFerrilata/library/pkg/middleware"
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
+	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 	en_translations "gopkg.in/go-playground/validator.v9/translations/en"
 )
@@ -16,8 +17,8 @@ func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middlewar
 	v := validator.New()
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
 		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
-		if name == "-" {
-			return ""
+		if name == "" {
+			return field.Name
 		}
 		return name
 	})
@@ -28,7 +29,7 @@ func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middlewar
 		return nil, fmt.Errorf("translator not found: %v", en.Locale())
 	}
 	if err := en_translations.RegisterDefaultTranslations(v, trans); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "validator.NewValidate")
 	}
 
 	return v, nil
