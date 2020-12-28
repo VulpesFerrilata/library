@@ -1,4 +1,4 @@
-package app_errors
+package app_error
 
 import ut "github.com/go-playground/universal-translator"
 

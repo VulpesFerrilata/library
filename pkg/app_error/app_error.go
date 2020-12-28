@@ -1,4 +1,4 @@
-package app_errors
+package app_error
 
 type AppError interface {
 	error

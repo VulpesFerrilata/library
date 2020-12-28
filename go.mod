@@ -16,6 +16,7 @@ require (
 	github.com/micro/go-micro/v2 v2.9.1
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.14.0 // indirect
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.7.1
 	github.com/valyala/fasthttp v1.16.0 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
