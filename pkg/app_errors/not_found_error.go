@@ -10,20 +10,20 @@ import (
 )
 
 func NewNotFoundError(name string) AppError {
-	return &notFoundError{
+	return &NotFoundError{
 		name: name,
 	}
 }
 
-type notFoundError struct {
+type NotFoundError struct {
 	name string
 }
 
-func (nfe notFoundError) Error() string {
+func (nfe NotFoundError) Error() string {
 	return fmt.Sprintf("%s not found", nfe.name)
 }
 
-func (nfe notFoundError) Problem(trans ut.Translator) (iris.Problem, error) {
+func (nfe NotFoundError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 	problem.Status(iris.StatusNotFound)
@@ -40,7 +40,7 @@ func (nfe notFoundError) Problem(trans ut.Translator) (iris.Problem, error) {
 	return problem, nil
 }
 
-func (nfe notFoundError) Status(trans ut.Translator) (*status.Status, error) {
+func (nfe NotFoundError) Status(trans ut.Translator) (*status.Status, error) {
 	detail, err := trans.T("not-found-error-detail", nfe.name)
 	if err != nil {
 		return nil, err
@@ -49,6 +49,6 @@ func (nfe notFoundError) Status(trans ut.Translator) (*status.Status, error) {
 	return stt, nil
 }
 
-func (nfe notFoundError) Message(trans ut.Translator) (string, error) {
+func (nfe NotFoundError) Message(trans ut.Translator) (string, error) {
 	return trans.T("not-found-error-detail", nfe.name)
 }
