@@ -16,11 +16,20 @@ import (
 func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middleware.TranslatorMiddleware) (*validator.Validate, error) {
 	v := validator.New()
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
-		name := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
-		if name == "" {
-			return field.Name
+		jsonName := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
+		if jsonName != "" {
+			return jsonName
 		}
-		return name
+
+		gormTags := strings.Split(field.Tag.Get("gorm"), ";")
+		for _, gormTag := range gormTags {
+			fieldTags := strings.Split(gormTag, ":")
+			if fieldTags[0] == "column" {
+				return fieldTags[1]
+			}
+		}
+
+		return ""
 	})
 
 	en := en.New()
