@@ -22,9 +22,9 @@ type ErrorHandlerMiddleware struct {
 func (ehm ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
 	return func(ctx context.Context, req server.Request, rsp interface{}) error {
 		err := f(ctx, req, rsp)
-		if err, ok := errors.Cause(err).(app_error.GrpcError); ok {
+		if grpcErr, ok := errors.Cause(err).(app_error.GrpcError); ok {
 			trans := ehm.translatorMiddleware.Get(ctx)
-			stt, err := err.Status(trans)
+			stt, err := grpcErr.Status(trans)
 			if err != nil {
 				return err
 			}
@@ -39,8 +39,8 @@ func (ehm ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
 		return
 	}
 
-	if se, ok := errors.Cause(err).(app_error.StatusError); ok {
-		stt := se.GRPCStatus()
+	if sttErr, ok := errors.Cause(err).(app_error.StatusError); ok {
+		stt := sttErr.GRPCStatus()
 		ehm.ErrorHandler(ctx, app_error.NewStatusError(stt))
 		return
 	}
