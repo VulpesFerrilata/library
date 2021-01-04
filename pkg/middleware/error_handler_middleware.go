@@ -45,6 +45,13 @@ func (ehm ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
 		return
 	}
 
+	if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
+		businessRuleErrs := make(app_error.BusinessRuleErrors, 0)
+		businessRuleErrs = append(businessRuleErrs, businessRuleErr)
+		ehm.ErrorHandler(ctx, businessRuleErrs)
+		return
+	}
+
 	if webErr, ok := errors.Cause(err).(app_error.WebError); ok {
 		trans := ehm.translatorMiddleware.Get(ctx.Request().Context())
 		problem, err := webErr.Problem(trans)
