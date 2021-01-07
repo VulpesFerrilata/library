@@ -6,7 +6,6 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 type StatusError interface {
@@ -33,37 +32,28 @@ func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 	switch se.stt.Code() {
 	case codes.InvalidArgument:
 		problem.Status(iris.StatusUnprocessableEntity)
-		title, err := trans.T("unprocessable-entity-error")
-		if err != nil {
-			return nil, err
-		}
-		problem.Title(title)
 	case codes.NotFound:
-		problem.Status(iris.StatusNotFound)
-		title, err := trans.T("not-found-error")
-		if err != nil {
-			return nil, err
-		}
-		problem.Title(title)
+		problem.Status(iris.StatusUnprocessableEntity)
 	default:
 		problem.Status(iris.StatusInternalServerError)
-		title, err := trans.T("grpc-error", se.stt.Code().String())
-		if err != nil {
-			return nil, err
-		}
-		problem.Title(title)
 	}
 	problem.Detail(se.stt.Message())
 
+	errs := make([]string, 0)
 	for _, detail := range se.stt.Details() {
 		switch detailType := detail.(type) {
 		case errdetails.BadRequest:
-			fieldErrors := make(validator.ValidationErrorsTranslations)
 			for _, fieldViolation := range detailType.GetFieldViolations() {
-				fieldErrors[fieldViolation.GetField()] = fieldViolation.GetDescription()
+				errs = append(errs, fieldViolation.GetDescription())
 			}
-			problem.Key("errors", fieldErrors)
+		case errdetails.PreconditionFailure:
+			for _, violation := range detailType.GetViolations() {
+				errs = append(errs, violation.GetDescription())
+			}
 		}
+	}
+	if len(errs) > 0 {
+		problem.Key("errors", errs)
 	}
 
 	return problem, nil

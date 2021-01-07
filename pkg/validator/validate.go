@@ -17,18 +17,9 @@ func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middlewar
 	v := validator.New()
 	v.RegisterTagNameFunc(func(field reflect.StructField) string {
 		jsonName := strings.SplitN(field.Tag.Get("json"), ",", 2)[0]
-		if jsonName != "" {
+		if jsonName != "-" {
 			return jsonName
 		}
-
-		gormTags := strings.Split(field.Tag.Get("gorm"), ";")
-		for _, gormTag := range gormTags {
-			fieldTags := strings.Split(gormTag, ":")
-			if fieldTags[0] == "column" {
-				return fieldTags[1]
-			}
-		}
-
 		return ""
 	})
 

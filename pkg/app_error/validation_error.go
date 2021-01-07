@@ -1,9 +1,7 @@
 package app_error
 
 import (
-	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 
 	ut "github.com/go-playground/universal-translator"
@@ -14,49 +12,20 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 )
 
-var (
-	ErrInvalidValidationType error = errors.New("invalid validation type")
-)
-
-func NewInputValidationError(s interface{}, fieldErrors validator.ValidationErrors) AppError {
-	return newValidationError(inputValidation, s, fieldErrors)
-}
-
-func NewEntityValidationError(s interface{}, fieldErrors validator.ValidationErrors) AppError {
-	return newValidationError(entityValidation, s, fieldErrors)
-}
-
-func newValidationError(validationType validationType, s interface{}, fieldErrors validator.ValidationErrors) AppError {
-	var namespace string
-	if t := reflect.TypeOf(s); t.Kind() == reflect.Ptr {
-		namespace = t.Elem().Name()
-	} else {
-		namespace = t.Name()
-	}
+func NewValidationError(fieldErrors validator.ValidationErrors) AppError {
 	return &validationError{
-		validationType: validationType,
-		namespace:      namespace,
-		fieldErrors:    fieldErrors,
+		fieldErrors: fieldErrors,
 	}
 }
-
-type validationType int
-
-const (
-	inputValidation validationType = iota
-	entityValidation
-)
 
 type validationError struct {
-	validationType validationType
-	namespace      string
-	fieldErrors    validator.ValidationErrors
+	fieldErrors validator.ValidationErrors
 }
 
 func (ve validationError) Error() string {
 	builder := new(strings.Builder)
 
-	builder.WriteString(fmt.Sprintf("one or more fields in %s contain invalid data", ve.namespace))
+	builder.WriteString("one or more fields contain invalid data")
 	builder.WriteString("\n")
 	builder.WriteString(ve.fieldErrors.Error())
 
@@ -67,32 +36,14 @@ func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 
-	switch ve.validationType {
-	case inputValidation:
-		problem.Status(iris.StatusUnprocessableEntity)
-		title, err := trans.T("unprocessable-entity-error")
-		if err != nil {
-			return nil, err
-		}
-		problem.Title(title)
-	case entityValidation:
-		problem.Status(iris.StatusInternalServerError)
-		title, err := trans.T("internal-server-error")
-		if err != nil {
-			return nil, err
-		}
-		problem.Title(title)
-	default:
-		return nil, ErrInvalidValidationType
-	}
-
-	detail, err := trans.T("validation-error-detail", ve.namespace)
+	problem.Status(iris.StatusUnprocessableEntity)
+	detail, err := trans.T("validation-error")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, "validation-error")
 	}
 	problem.Detail(detail)
 
-	var errors []string
+	errors := make([]string, 0)
 	for _, fieldError := range ve.fieldErrors {
 		fieldErrorTrans := fieldError.Translate(trans)
 		errors = append(errors, fieldErrorTrans)
@@ -103,26 +54,17 @@ func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 }
 
 func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
-	detail, err := trans.T("validation-error-detail", ve.namespace)
+	detail, err := trans.T("validation-error")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, "validation-error")
 	}
-	var code codes.Code
-	switch ve.validationType {
-	case inputValidation:
-		code = codes.InvalidArgument
-	case entityValidation:
-		code = codes.Internal
-	default:
-		return nil, ErrInvalidValidationType
-	}
-	stt := status.New(code, detail)
+	stt := status.New(codes.InvalidArgument, detail)
+
 	badRequest := &errdetails.BadRequest{}
-	fieldErrors := ve.fieldErrors.Translate(trans)
-	for namespace, fieldError := range fieldErrors {
+	for _, fieldError := range ve.fieldErrors {
 		fieldViolation := &errdetails.BadRequest_FieldViolation{
-			Field:       namespace,
-			Description: fieldError,
+			Field:       fieldError.Field(),
+			Description: fieldError.Translate(trans),
 		}
 
 		badRequest.FieldViolations = append(badRequest.FieldViolations, fieldViolation)

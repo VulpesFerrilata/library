@@ -1,10 +1,12 @@
 package app_error
 
 import (
+	"fmt"
 	"strings"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/kataras/iris/v12"
+	"github.com/pkg/errors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,27 +35,21 @@ func (bre BusinessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error)
 	problem.Type("about:blank")
 
 	problem.Status(iris.StatusUnprocessableEntity)
-	title, err := trans.T("unprocessable-entity-error")
-	if err != nil {
-		return nil, err
-	}
-	problem.Title(title)
-
 	detail, err := trans.T("business-rule-error")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, "business-rule-error")
 	}
 	problem.Detail(detail)
 
-	var errors []string
+	var errs []string
 	for _, businessRuleError := range bre {
 		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "app_error.BusinessRuleErrors.Problem")
 		}
-		errors = append(errors, businessRuleErrorTrans)
+		errs = append(errs, businessRuleErrorTrans)
 	}
-	problem.Key("errors", errors)
+	problem.Key("errors", errs)
 
 	return problem, nil
 }
@@ -61,32 +57,27 @@ func (bre BusinessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error)
 func (bre BusinessRuleErrors) Status(trans ut.Translator) (*status.Status, error) {
 	detail, err := trans.T("business-rule-error")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, "business-rule-error")
 	}
-
 	stt := status.New(codes.FailedPrecondition, detail)
 
 	preconditionFailure := &errdetails.PreconditionFailure{}
-
-	violationType, err := trans.T("business-rule")
-	if err != nil {
-		return nil, err
-	}
 	for _, businessRuleError := range bre {
 		description, err := businessRuleError.Translate(trans)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "app_error.BusinessRuleErrors.Status")
 		}
 
 		violation := &errdetails.PreconditionFailure_Violation{
-			Type:        violationType,
+			Type:        "business rule",
 			Description: description,
 		}
 
 		preconditionFailure.Violations = append(preconditionFailure.Violations, violation)
 	}
 
-	return stt.WithDetails(preconditionFailure)
+	stt, err = stt.WithDetails(preconditionFailure)
+	return stt, errors.Wrap(err, "app_error.BusinessRuleErrors.Status")
 }
 
 func (bre BusinessRuleErrors) Message(trans ut.Translator) (string, error) {
@@ -95,7 +86,7 @@ func (bre BusinessRuleErrors) Message(trans ut.Translator) (string, error) {
 	for _, fieldError := range bre {
 		fieldErrorTrans, err := fieldError.Translate(trans)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "app_error.BusinessRuleErrors.Message")
 		}
 		builder.WriteString(fieldErrorTrans)
 		builder.WriteString("\n")

@@ -26,29 +26,27 @@ func (nfe NotFoundError) Error() string {
 func (nfe NotFoundError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
-	problem.Status(iris.StatusNotFound)
-	title, err := trans.T("not-found-error")
+	problem.Status(iris.StatusUnprocessableEntity)
+
+	detail, err := trans.T("not-found-error", nfe.name)
 	if err != nil {
-		return nil, err
-	}
-	problem.Title(title)
-	detail, err := trans.T("not-found-error-detail", nfe.name)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, "not-found-error")
 	}
 	problem.Detail(detail)
+
 	return problem, nil
 }
 
 func (nfe NotFoundError) Status(trans ut.Translator) (*status.Status, error) {
-	detail, err := trans.T("not-found-error-detail", nfe.name)
+	detail, err := trans.T("not-found-error", nfe.name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %s", err, "not-found-error")
 	}
 	stt := status.New(codes.NotFound, detail)
 	return stt, nil
 }
 
 func (nfe NotFoundError) Message(trans ut.Translator) (string, error) {
-	return trans.T("not-found-error-detail", nfe.name)
+	msg, err := trans.T("not-found-error", nfe.name)
+	return msg, fmt.Errorf("%w: %s", err, "not-found-error")
 }
