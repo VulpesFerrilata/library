@@ -20,24 +20,23 @@ type ErrorHandlerMiddleware struct {
 	translatorMiddleware *TranslatorMiddleware
 }
 
-func (ehm ErrorHandlerMiddleware) Serve() iris.Handler {
-	return func(ctx iris.Context) {
-		defer func() {
-			if r := recover(); r != nil {
-				problem, ok := r.(iris.Problem)
-				if !ok {
-					problem = iris.NewProblem()
-					problem.Type("about:blank")
-					problem.Status(iris.StatusInternalServerError)
-					problem.Title("internal server error")
-					problem.Detail(fmt.Sprint(r))
-				}
-				ctx.Problem(problem)
-				ctx.StopExecution()
+func (ehm ErrorHandlerMiddleware) Serve(ctx iris.Context) {
+	defer func() {
+		if r := recover(); r != nil {
+			problem, ok := r.(iris.Problem)
+			if !ok {
+				problem = iris.NewProblem()
+				problem.Type("about:blank")
+				problem.Status(iris.StatusInternalServerError)
+				problem.Title("internal server error")
+				problem.Detail(fmt.Sprint(r))
 			}
-		}()
-		ctx.Next()
-	}
+			ctx.Problem(problem)
+			ctx.StopExecution()
+		}
+	}()
+
+	ctx.Next()
 }
 
 func (ehm ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
