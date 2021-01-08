@@ -32,6 +32,8 @@ func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 	switch se.stt.Code() {
 	case codes.InvalidArgument:
 		problem.Status(iris.StatusUnprocessableEntity)
+	case codes.FailedPrecondition:
+		problem.Status(iris.StatusUnprocessableEntity)
 	case codes.NotFound:
 		problem.Status(iris.StatusUnprocessableEntity)
 	default:
@@ -42,11 +44,11 @@ func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 	errs := make([]string, 0)
 	for _, detail := range se.stt.Details() {
 		switch detailType := detail.(type) {
-		case errdetails.BadRequest:
+		case *errdetails.BadRequest:
 			for _, fieldViolation := range detailType.GetFieldViolations() {
 				errs = append(errs, fieldViolation.GetDescription())
 			}
-		case errdetails.PreconditionFailure:
+		case *errdetails.PreconditionFailure:
 			for _, violation := range detailType.GetViolations() {
 				errs = append(errs, violation.GetDescription())
 			}

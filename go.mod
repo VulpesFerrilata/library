@@ -9,6 +9,7 @@ require (
 	github.com/go-playground/pkg/v5 v5.1.0
 	github.com/go-playground/pure/v5 v5.1.0
 	github.com/go-playground/universal-translator v0.17.0
+	github.com/golang/protobuf v1.4.2
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/kataras/iris/v12 v12.1.8
@@ -16,6 +17,7 @@ require (
 	github.com/micro/go-micro/v2 v2.9.1
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/onsi/ginkgo v1.14.0 // indirect
+	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.7.1
 	github.com/valyala/fasthttp v1.16.0 // indirect
@@ -24,6 +26,7 @@ require (
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	github.com/yudai/pp v2.0.1+incompatible // indirect
+	golang.org/x/net v0.0.0-20200602114024-627f9648deb9
 	google.golang.org/genproto v0.0.0-20191216164720-4f79533eabd1
 	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
