@@ -46,11 +46,11 @@ func (ehm ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.Ha
 			trans := ehm.translatorMiddleware.Get(ctx)
 			stt, err := grpcErr.Status(trans)
 			if err != nil {
-				return errors.Wrap(err, "middleware.ErrorHandlerMiddleware.HandlerWrapper")
+				return err
 			}
 			return stt.Err()
 		}
-		return errors.Wrap(err, "middleware.ErrorHandlerMiddleware.HandlerWrapper")
+		return err
 	}
 }
 
