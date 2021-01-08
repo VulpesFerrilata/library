@@ -36,6 +36,8 @@ func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 		problem.Status(iris.StatusUnprocessableEntity)
 	case codes.NotFound:
 		problem.Status(iris.StatusUnprocessableEntity)
+	case codes.Unauthenticated:
+		problem.Status(iris.StatusUnauthorized)
 	default:
 		problem.Status(iris.StatusInternalServerError)
 	}
