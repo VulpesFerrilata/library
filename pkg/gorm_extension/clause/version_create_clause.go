@@ -34,14 +34,16 @@ func (v versionCreateClause) MergeClause(*clause.Clause) {
 func (v versionCreateClause) ModifyStatement(stmt *gorm.Statement) {
 	if c, ok := stmt.Clauses[clause.Values{}.Name()]; ok {
 		if values, ok := c.Expression.(clause.Values); ok {
-			for idx := 0; idx < len(values.Columns); idx++ {
-				if values.Columns[idx].Name == v.field.DBName {
-					for _, value := range values.Values {
-						value[idx] = 1
+			for columnIdx := range values.Columns {
+				if values.Columns[columnIdx].Name == v.field.DBName {
+					for rowIdx := range values.Values {
+						values.Values[rowIdx][columnIdx] = 1
 					}
-					break
 				}
 			}
+
+			c.Expression = values
+			stmt.Clauses[clause.Values{}.Name()] = c
 		}
 	}
 }

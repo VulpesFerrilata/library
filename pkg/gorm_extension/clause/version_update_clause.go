@@ -47,6 +47,27 @@ func (v versionUpdateClause) ModifyStatement(stmt *gorm.Statement) {
 			set = append(set, assignment)
 
 			c.Expression = set
+			stmt.Clauses[clause.Set{}.Name()] = c
 		}
 	}
+
+	if c, ok := stmt.Clauses[clause.Where{}.Name()]; ok {
+		if where, ok := c.Expression.(clause.Where); ok && len(where.Exprs) > 1 {
+			for _, expr := range where.Exprs {
+				if orCond, ok := expr.(clause.OrConditions); ok && len(orCond.Exprs) == 1 {
+					where.Exprs = []clause.Expression{
+						clause.And(where.Exprs...),
+					}
+
+					c.Expression = where
+					stmt.Clauses[clause.Where{}.Name()] = c
+					break
+				}
+			}
+		}
+	}
+
+	stmt.AddClause(clause.Where{Exprs: []clause.Expression{
+		clause.Eq{Column: clause.Column{Table: clause.CurrentTable, Name: v.field.DBName}, Value: nil},
+	}})
 }
