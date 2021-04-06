@@ -1,5 +1,6 @@
 package config
 
 type ServiceSettings struct {
-	AllowedOrigins []string `mapstructure:"AllowedOrigins"`
+	TranslationFolderPath string   `mapstructure:"TranslationFolderPath"`
+	AllowedOrigins        []string `mapstructure:"AllowedOrigins"`
 }

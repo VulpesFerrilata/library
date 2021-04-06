@@ -1,7 +1,7 @@
-package model
+package gorm
 
 import (
-	extension_clause "github.com/VulpesFerrilata/library/pkg/gorm_extension/clause"
+	clause_custom "github.com/VulpesFerrilata/library/pkg/gorm/clause"
 	"gorm.io/gorm/clause"
 	"gorm.io/gorm/schema"
 )
@@ -20,18 +20,18 @@ type version int64
 
 func (v version) CreateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{
-		extension_clause.NewVersionCreateClause(f),
+		clause_custom.NewVersionCreateClause(f),
 	}
 }
 
 func (v version) UpdateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{
-		extension_clause.NewVersionUpdateClause(f),
+		clause_custom.NewVersionUpdateClause(f),
 	}
 }
 
 func (v version) DeleteClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{
-		extension_clause.NewVersionDeleteClause(f),
+		clause_custom.NewVersionDeleteClause(f),
 	}
 }

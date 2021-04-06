@@ -22,11 +22,11 @@ func NewConfig() (*Config, error) {
 	viper.AutomaticEnv()
 
 	if err := v.ReadInConfig(); err != nil {
-		return nil, errors.Wrap(err, "config.NewConfig")
+		return nil, errors.WithStack(err)
 	}
 
 	if err := v.Unmarshal(cfg); err != nil {
-		return nil, errors.Wrap(err, "config.NewConfig")
+		return nil, errors.WithStack(err)
 	}
 
 	return cfg, nil

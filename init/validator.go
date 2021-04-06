@@ -1,7 +1,6 @@
-package validator
+package init
 
 import (
-	"fmt"
 	"reflect"
 	"strings"
 
@@ -26,10 +25,10 @@ func NewValidate(utrans *ut.UniversalTranslator, translatorMiddleware *middlewar
 	en := en.New()
 	trans, found := utrans.GetTranslator(en.Locale())
 	if !found {
-		return nil, fmt.Errorf("translator not found: %v", en.Locale())
+		return nil, errors.Errorf("translator not found: %v", en.Locale())
 	}
 	if err := en_translations.RegisterDefaultTranslations(v, trans); err != nil {
-		return nil, errors.Wrap(err, "validator.NewValidate")
+		return nil, errors.WithStack(err)
 	}
 
 	return v, nil

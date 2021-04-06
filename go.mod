@@ -9,6 +9,7 @@ require (
 	github.com/go-playground/pkg/v5 v5.1.0
 	github.com/go-playground/pure/v5 v5.1.0
 	github.com/go-playground/universal-translator v0.17.0
+	github.com/google/uuid v1.1.1
 	github.com/imkira/go-interpol v1.1.0 // indirect
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/kataras/iris/v12 v12.1.8
@@ -29,6 +30,6 @@ require (
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
 	gorm.io/driver/mysql v1.0.1
-	gorm.io/driver/sqlite v1.1.3
-	gorm.io/gorm v1.20.1
+	gorm.io/driver/sqlite v1.1.4
+	gorm.io/gorm v1.21.6
 )
