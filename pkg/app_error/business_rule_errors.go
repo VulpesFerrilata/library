@@ -1,7 +1,6 @@
 package app_error
 
 import (
-	"fmt"
 	"strings"
 
 	ut "github.com/go-playground/universal-translator"
@@ -12,32 +11,32 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ AppError = new(BusinessRuleErrors)
+func NewBusinessRuleErrors(businessRuleErrs ...BusinessRuleError) AppError {
+	return businessRuleErrors(businessRuleErrs)
+}
 
-type BusinessRuleErrors []BusinessRuleError
+type businessRuleErrors []BusinessRuleError
 
-func (bre BusinessRuleErrors) Error() string {
+func (bre businessRuleErrors) Error() string {
 	builder := new(strings.Builder)
 
 	builder.WriteString("the request has violate one or more business rules")
-	builder.WriteString("\n")
-
 	for _, businessRuleError := range bre {
-		builder.WriteString(businessRuleError.Error())
 		builder.WriteString("\n")
+		builder.WriteString(businessRuleError.Error())
 	}
 
-	return strings.TrimSpace(builder.String())
+	return builder.String()
 }
 
-func (bre BusinessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error) {
+func (bre businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 
 	problem.Status(iris.StatusUnprocessableEntity)
 	detail, err := trans.T("business-rule-error")
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", err, "business-rule-error")
+		return nil, errors.WithStack(err)
 	}
 	problem.Detail(detail)
 
@@ -45,7 +44,7 @@ func (bre BusinessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error)
 	for _, businessRuleError := range bre {
 		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
 		if err != nil {
-			return nil, errors.Wrap(err, "app_error.BusinessRuleErrors.Problem")
+			return nil, errors.WithStack(err)
 		}
 		errs = append(errs, businessRuleErrorTrans)
 	}
@@ -54,10 +53,10 @@ func (bre BusinessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error)
 	return problem, nil
 }
 
-func (bre BusinessRuleErrors) Status(trans ut.Translator) (*status.Status, error) {
+func (bre businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) {
 	detail, err := trans.T("business-rule-error")
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", err, "business-rule-error")
+		return nil, errors.WithStack(err)
 	}
 	stt := status.New(codes.FailedPrecondition, detail)
 
@@ -65,7 +64,7 @@ func (bre BusinessRuleErrors) Status(trans ut.Translator) (*status.Status, error
 	for _, businessRuleError := range bre {
 		description, err := businessRuleError.Translate(trans)
 		if err != nil {
-			return nil, errors.Wrap(err, "app_error.BusinessRuleErrors.Status")
+			return nil, errors.WithStack(err)
 		}
 
 		violation := &errdetails.PreconditionFailure_Violation{
@@ -77,19 +76,24 @@ func (bre BusinessRuleErrors) Status(trans ut.Translator) (*status.Status, error
 	}
 
 	stt, err = stt.WithDetails(preconditionFailure)
-	return stt, errors.Wrap(err, "app_error.BusinessRuleErrors.Status")
+	return stt, errors.WithStack(err)
 }
 
-func (bre BusinessRuleErrors) Message(trans ut.Translator) (string, error) {
+func (bre businessRuleErrors) Message(trans ut.Translator) (string, error) {
 	builder := new(strings.Builder)
 
-	for _, fieldError := range bre {
-		fieldErrorTrans, err := fieldError.Translate(trans)
-		if err != nil {
-			return "", errors.Wrap(err, "app_error.BusinessRuleErrors.Message")
-		}
-		builder.WriteString(fieldErrorTrans)
+	detail, err := trans.T("business-rule-error")
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	builder.WriteString(detail)
+	for _, businessRuleError := range bre {
 		builder.WriteString("\n")
+		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
+		if err != nil {
+			return "", errors.WithStack(err)
+		}
+		builder.WriteString(businessRuleErrorTrans)
 	}
 
 	return builder.String(), nil

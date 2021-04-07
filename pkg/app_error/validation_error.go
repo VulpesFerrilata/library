@@ -1,11 +1,11 @@
 package app_error
 
 import (
-	"fmt"
 	"strings"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/kataras/iris/v12"
+	"github.com/pkg/errors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,7 +29,7 @@ func (ve validationError) Error() string {
 	builder.WriteString("\n")
 	builder.WriteString(ve.fieldErrors.Error())
 
-	return strings.TrimSpace(builder.String())
+	return builder.String()
 }
 
 func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
@@ -39,7 +39,7 @@ func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem.Status(iris.StatusUnprocessableEntity)
 	detail, err := trans.T("validation-error")
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", err, "validation-error")
+		return nil, errors.WithStack(err)
 	}
 	problem.Detail(detail)
 
@@ -56,7 +56,7 @@ func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
 	detail, err := trans.T("validation-error")
 	if err != nil {
-		return nil, fmt.Errorf("%w: %s", err, "validation-error")
+		return nil, errors.WithStack(err)
 	}
 	stt := status.New(codes.InvalidArgument, detail)
 
@@ -76,9 +76,14 @@ func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
 func (ve validationError) Message(trans ut.Translator) (string, error) {
 	builder := new(strings.Builder)
 
+	detail, err := trans.T("validation-error")
+	if err != nil {
+		return "", errors.WithStack(err)
+	}
+	builder.WriteString(detail)
 	for _, fieldError := range ve.fieldErrors {
-		builder.WriteString(fieldError.Translate(trans))
 		builder.WriteString("\n")
+		builder.WriteString(fieldError.Translate(trans))
 	}
 
 	return builder.String(), nil
