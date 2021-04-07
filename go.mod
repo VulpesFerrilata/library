@@ -1,9 +1,10 @@
 module github.com/VulpesFerrilata/library
 
-go 1.14
+go 1.16
 
 require (
 	github.com/ajg/form v1.5.1 // indirect
+	github.com/asim/go-micro/v3 v3.5.0
 	github.com/fasthttp-contrib/websocket v0.0.0-20160511215533-1f3b11f56072 // indirect
 	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/pkg/v5 v5.1.0
@@ -14,9 +15,7 @@ require (
 	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/kataras/iris/v12 v12.1.8
 	github.com/leodido/go-urn v1.2.0 // indirect
-	github.com/micro/go-micro/v2 v2.9.1
 	github.com/moul/http2curl v1.0.0 // indirect
-	github.com/onsi/ginkgo v1.14.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.7.1
 	github.com/valyala/fasthttp v1.16.0 // indirect
@@ -29,7 +28,7 @@ require (
 	google.golang.org/grpc v1.26.0
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.31.0
-	gorm.io/driver/mysql v1.0.1
+	gorm.io/driver/mysql v1.0.5
 	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.6
 )

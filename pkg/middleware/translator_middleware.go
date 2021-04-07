@@ -3,14 +3,14 @@ package middleware
 import (
 	"context"
 
+	"github.com/asim/go-micro/v3/client"
+	"github.com/asim/go-micro/v3/metadata"
+	"github.com/asim/go-micro/v3/registry"
+	"github.com/asim/go-micro/v3/server"
 	httpext "github.com/go-playground/pkg/v5/net/http"
 	"github.com/go-playground/pure/v5"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/kataras/iris/v12"
-	"github.com/micro/go-micro/v2/client"
-	"github.com/micro/go-micro/v2/metadata"
-	"github.com/micro/go-micro/v2/registry"
-	"github.com/micro/go-micro/v2/server"
 )
 
 type translatorKey struct{}

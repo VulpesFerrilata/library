@@ -4,8 +4,9 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/asim/go-micro/v3/server"
 	"github.com/kataras/iris/v12"
-	"github.com/micro/go-micro/v2/server"
+	iris_context "github.com/kataras/iris/v12/context"
 	"gorm.io/gorm"
 )
 
@@ -33,9 +34,9 @@ func (tm TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.
 		tx := tm.db.WithContext(requestCtx).Begin(opt)
 
 		defer func() {
-			if request := recover(); request != nil {
+			if r := recover(); r != nil {
 				tx.Rollback()
-				panic(request)
+				panic(r)
 			}
 			tx.Commit()
 		}()
@@ -45,6 +46,11 @@ func (tm TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.
 		ctx.ResetRequest(request)
 
 		ctx.Next()
+
+		statusCode := ctx.GetStatusCode()
+		if iris_context.StatusCodeNotSuccessful(statusCode) {
+			tx.Rollback()
+		}
 	}
 }
 

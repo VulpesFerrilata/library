@@ -1,24 +1,27 @@
 package config
 
 import (
+	"path/filepath"
+
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
-
-const configFilename = "config"
 
 type Config struct {
 	ServiceSettings `mapstructure:"ServiceSettings"`
 	SqlSettings     `mapstructure:"SqlSettings"`
 }
 
-func NewConfig() (*Config, error) {
+func NewConfig(path string) (*Config, error) {
+	absPath, err := filepath.Abs(path)
+	if err != nil {
+		return nil, errors.WithStack(err)
+	}
+
 	cfg := new(Config)
 
 	v := viper.New()
-	v.SetConfigName(configFilename)
-	v.AddConfigPath("./")
-	v.AddConfigPath("./config")
+	v.SetConfigFile(absPath)
 	viper.AutomaticEnv()
 
 	if err := v.ReadInConfig(); err != nil {
