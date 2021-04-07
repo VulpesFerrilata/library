@@ -39,19 +39,19 @@ func (tm TranslatorMiddleware) Serve(ctx iris.Context) {
 }
 
 func (tm TranslatorMiddleware) CallWrapper(f client.CallFunc) client.CallFunc {
-	return func(ctx context.Context, node *registry.Node, req client.Request, rsp interface{}, opts client.CallOptions) error {
+	return func(ctx context.Context, node *registry.Node, request client.Request, response interface{}, opts client.CallOptions) error {
 		trans := tm.Get(ctx)
 		ctx = metadata.Set(ctx, httpext.AcceptedLanguage, trans.Locale())
-		return f(ctx, node, req, rsp, opts)
+		return f(ctx, node, request, response, opts)
 	}
 }
 
 func (tm TranslatorMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
-	return func(ctx context.Context, req server.Request, rsp interface{}) error {
+	return func(ctx context.Context, request server.Request, response interface{}) error {
 		language, _ := metadata.Get(ctx, httpext.AcceptedLanguage)
 		trans, _ := tm.utrans.FindTranslator(language)
 		ctx = context.WithValue(ctx, translatorKey{}, trans)
-		return f(ctx, req, rsp)
+		return f(ctx, request, response)
 	}
 }
 

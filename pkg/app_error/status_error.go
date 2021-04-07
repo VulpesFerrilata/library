@@ -8,10 +8,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type StatusError interface {
-	GRPCStatus() *status.Status
-}
-
 func NewStatusError(stt *status.Status) WebError {
 	return &statusError{
 		stt: stt,
