@@ -18,14 +18,14 @@ type statusError struct {
 	stt *status.Status
 }
 
-func (se *statusError) Error() string {
-	return se.stt.Err().Error()
+func (s statusError) Error() string {
+	return s.stt.Err().Error()
 }
 
-func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
+func (s statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
-	switch se.stt.Code() {
+	switch s.stt.Code() {
 	case codes.InvalidArgument:
 		problem.Status(iris.StatusUnprocessableEntity)
 	case codes.FailedPrecondition:
@@ -37,10 +37,10 @@ func (se *statusError) Problem(trans ut.Translator) (iris.Problem, error) {
 	default:
 		problem.Status(iris.StatusInternalServerError)
 	}
-	problem.Detail(se.stt.Message())
+	problem.Detail(s.stt.Message())
 
 	errs := make([]string, 0)
-	for _, detail := range se.stt.Details() {
+	for _, detail := range s.stt.Details() {
 		switch detailType := detail.(type) {
 		case *errdetails.BadRequest:
 			for _, fieldViolation := range detailType.GetFieldViolations() {

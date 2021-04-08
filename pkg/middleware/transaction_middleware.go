@@ -7,6 +7,7 @@ import (
 	"github.com/asim/go-micro/v3/server"
 	"github.com/kataras/iris/v12"
 	iris_context "github.com/kataras/iris/v12/context"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ type TransactionMiddleware struct {
 	db *gorm.DB
 }
 
-func (tm TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.Handler {
+func (t TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.Handler {
 	opt := new(sql.TxOptions)
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -31,14 +32,18 @@ func (tm TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.
 	return func(ctx iris.Context) {
 		request := ctx.Request()
 		requestCtx := request.Context()
-		tx := tm.db.WithContext(requestCtx).Begin(opt)
+		tx := t.db.WithContext(requestCtx).Begin(opt)
 
 		defer func() {
 			if r := recover(); r != nil {
 				tx.Rollback()
 				panic(r)
 			}
-			tx.Commit()
+
+			err := tx.Commit().Error
+			if err != nil {
+				panic(errors.WithStack(err))
+			}
 		}()
 
 		requestCtx = context.WithValue(requestCtx, transactionKey{}, tx)
@@ -54,7 +59,7 @@ func (tm TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.
 	}
 }
 
-func (tm TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOptions) server.HandlerWrapper {
+func (t TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOptions) server.HandlerWrapper {
 	opt := new(sql.TxOptions)
 	if len(opts) > 0 {
 		opt = opts[0]
@@ -62,14 +67,18 @@ func (tm TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOptio
 
 	return func(f server.HandlerFunc) server.HandlerFunc {
 		return func(ctx context.Context, request server.Request, response interface{}) error {
-			tx := tm.db.WithContext(ctx).Begin(opt)
+			tx := t.db.WithContext(ctx).Begin(opt)
 
 			defer func() {
-				if request := recover(); request != nil {
+				if r := recover(); r != nil {
 					tx.Rollback()
-					panic(request)
+					panic(r)
 				}
-				tx.Commit()
+
+				err := tx.Commit().Error
+				if err != nil {
+					panic(errors.WithStack(err))
+				}
 			}()
 
 			ctx = context.WithValue(ctx, transactionKey{}, tx)
@@ -79,17 +88,16 @@ func (tm TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOptio
 				tx.Rollback()
 				return err
 			}
-			tx.Commit()
 
 			return nil
 		}
 	}
 }
 
-func (tm TransactionMiddleware) Get(ctx context.Context) *gorm.DB {
+func (t TransactionMiddleware) Get(ctx context.Context) *gorm.DB {
 	tx, ok := ctx.Value(transactionKey{}).(*gorm.DB)
 	if !ok {
-		return tm.db.WithContext(ctx)
+		return t.db.WithContext(ctx)
 	}
 	return tx.WithContext(ctx)
 }

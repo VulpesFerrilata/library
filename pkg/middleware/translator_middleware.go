@@ -25,12 +25,12 @@ type TranslatorMiddleware struct {
 	utrans *ut.UniversalTranslator
 }
 
-func (tm TranslatorMiddleware) Serve(ctx iris.Context) {
+func (t TranslatorMiddleware) Serve(ctx iris.Context) {
 	request := ctx.Request()
 
 	requestCtx := request.Context()
 	languages := pure.AcceptedLanguages(request)
-	trans, _ := tm.utrans.FindTranslator(languages...)
+	trans, _ := t.utrans.FindTranslator(languages...)
 	requestCtx = context.WithValue(requestCtx, translatorKey{}, trans)
 	request.WithContext(requestCtx)
 
@@ -38,27 +38,27 @@ func (tm TranslatorMiddleware) Serve(ctx iris.Context) {
 	ctx.Next()
 }
 
-func (tm TranslatorMiddleware) CallWrapper(f client.CallFunc) client.CallFunc {
+func (t TranslatorMiddleware) CallWrapper(f client.CallFunc) client.CallFunc {
 	return func(ctx context.Context, node *registry.Node, request client.Request, response interface{}, opts client.CallOptions) error {
-		trans := tm.Get(ctx)
+		trans := t.Get(ctx)
 		ctx = metadata.Set(ctx, httpext.AcceptedLanguage, trans.Locale())
 		return f(ctx, node, request, response, opts)
 	}
 }
 
-func (tm TranslatorMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
+func (t TranslatorMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
 	return func(ctx context.Context, request server.Request, response interface{}) error {
 		language, _ := metadata.Get(ctx, httpext.AcceptedLanguage)
-		trans, _ := tm.utrans.FindTranslator(language)
+		trans, _ := t.utrans.FindTranslator(language)
 		ctx = context.WithValue(ctx, translatorKey{}, trans)
 		return f(ctx, request, response)
 	}
 }
 
-func (tm TranslatorMiddleware) Get(ctx context.Context) ut.Translator {
+func (t TranslatorMiddleware) Get(ctx context.Context) ut.Translator {
 	trans, found := ctx.Value(translatorKey{}).(ut.Translator)
 	if !found {
-		return tm.utrans.GetFallback()
+		return t.utrans.GetFallback()
 	}
 	return trans
 }

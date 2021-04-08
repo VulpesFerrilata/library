@@ -22,17 +22,17 @@ type validationError struct {
 	fieldErrors validator.ValidationErrors
 }
 
-func (ve validationError) Error() string {
+func (v validationError) Error() string {
 	builder := new(strings.Builder)
 
 	builder.WriteString("one or more fields contain invalid data")
 	builder.WriteString("\n")
-	builder.WriteString(ve.fieldErrors.Error())
+	builder.WriteString(v.fieldErrors.Error())
 
 	return builder.String()
 }
 
-func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
+func (v validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 
@@ -44,7 +44,7 @@ func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem.Detail(detail)
 
 	errors := make([]string, 0)
-	for _, fieldError := range ve.fieldErrors {
+	for _, fieldError := range v.fieldErrors {
 		fieldErrorTrans := fieldError.Translate(trans)
 		errors = append(errors, fieldErrorTrans)
 	}
@@ -53,7 +53,7 @@ func (ve validationError) Problem(trans ut.Translator) (iris.Problem, error) {
 	return problem, nil
 }
 
-func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
+func (v validationError) Status(trans ut.Translator) (*status.Status, error) {
 	detail, err := trans.T("validation-error")
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -61,7 +61,7 @@ func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
 	stt := status.New(codes.InvalidArgument, detail)
 
 	badRequest := &errdetails.BadRequest{}
-	for _, fieldError := range ve.fieldErrors {
+	for _, fieldError := range v.fieldErrors {
 		fieldViolation := &errdetails.BadRequest_FieldViolation{
 			Field:       fieldError.Field(),
 			Description: fieldError.Translate(trans),
@@ -73,7 +73,7 @@ func (ve validationError) Status(trans ut.Translator) (*status.Status, error) {
 	return stt.WithDetails(badRequest)
 }
 
-func (ve validationError) Message(trans ut.Translator) (string, error) {
+func (v validationError) Message(trans ut.Translator) (string, error) {
 	builder := new(strings.Builder)
 
 	detail, err := trans.T("validation-error")
@@ -81,7 +81,7 @@ func (ve validationError) Message(trans ut.Translator) (string, error) {
 		return "", errors.WithStack(err)
 	}
 	builder.WriteString(detail)
-	for _, fieldError := range ve.fieldErrors {
+	for _, fieldError := range v.fieldErrors {
 		builder.WriteString("\n")
 		builder.WriteString(fieldError.Translate(trans))
 	}

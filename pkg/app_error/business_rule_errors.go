@@ -17,11 +17,11 @@ func NewBusinessRuleErrors(businessRuleErrs ...BusinessRuleError) AppError {
 
 type businessRuleErrors []BusinessRuleError
 
-func (bre businessRuleErrors) Error() string {
+func (b businessRuleErrors) Error() string {
 	builder := new(strings.Builder)
 
 	builder.WriteString("the request has violate one or more business rules")
-	for _, businessRuleError := range bre {
+	for _, businessRuleError := range b {
 		builder.WriteString("\n")
 		builder.WriteString(businessRuleError.Error())
 	}
@@ -29,7 +29,7 @@ func (bre businessRuleErrors) Error() string {
 	return builder.String()
 }
 
-func (bre businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error) {
+func (b businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 
@@ -41,7 +41,7 @@ func (bre businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error)
 	problem.Detail(detail)
 
 	var errs []string
-	for _, businessRuleError := range bre {
+	for _, businessRuleError := range b {
 		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -53,7 +53,7 @@ func (bre businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error)
 	return problem, nil
 }
 
-func (bre businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) {
+func (b businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) {
 	detail, err := trans.T("business-rule-error")
 	if err != nil {
 		return nil, errors.WithStack(err)
@@ -61,7 +61,7 @@ func (bre businessRuleErrors) Status(trans ut.Translator) (*status.Status, error
 	stt := status.New(codes.FailedPrecondition, detail)
 
 	preconditionFailure := &errdetails.PreconditionFailure{}
-	for _, businessRuleError := range bre {
+	for _, businessRuleError := range b {
 		description, err := businessRuleError.Translate(trans)
 		if err != nil {
 			return nil, errors.WithStack(err)
@@ -79,7 +79,7 @@ func (bre businessRuleErrors) Status(trans ut.Translator) (*status.Status, error
 	return stt, errors.WithStack(err)
 }
 
-func (bre businessRuleErrors) Message(trans ut.Translator) (string, error) {
+func (b businessRuleErrors) Message(trans ut.Translator) (string, error) {
 	builder := new(strings.Builder)
 
 	detail, err := trans.T("business-rule-error")
@@ -87,7 +87,7 @@ func (bre businessRuleErrors) Message(trans ut.Translator) (string, error) {
 		return "", errors.WithStack(err)
 	}
 	builder.WriteString(detail)
-	for _, businessRuleError := range bre {
+	for _, businessRuleError := range b {
 		builder.WriteString("\n")
 		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
 		if err != nil {

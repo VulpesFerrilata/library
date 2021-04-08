@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/VulpesFerrilata/library/pkg/app_error"
 	"github.com/asim/go-micro/v3/server"
@@ -10,10 +9,6 @@ import (
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/status"
 )
-
-type statusError interface {
-	GRPCStatus() *status.Status
-}
 
 func NewErrorHandlerMiddleware(translatorMiddleware *TranslatorMiddleware) *ErrorHandlerMiddleware {
 	return &ErrorHandlerMiddleware{
@@ -25,72 +20,47 @@ type ErrorHandlerMiddleware struct {
 	translatorMiddleware *TranslatorMiddleware
 }
 
-func (ehm ErrorHandlerMiddleware) Serve(ctx iris.Context) {
-	defer func() {
-		if r := recover(); r != nil {
-			err, ok := r.(error)
-			if !ok {
-				err = errors.New(fmt.Sprint(r))
-			}
-
-			problem := iris.NewProblem()
-			problem.Type("about:blank")
-			problem.Status(iris.StatusInternalServerError)
-			problem.Title("internal server error")
-			problem.Detail(fmt.Sprintf("%+v", err))
-
-			ctx.Problem(problem)
-			ctx.StopExecution()
-		}
-	}()
-}
-
-func (ehm ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
-	return func(ctx context.Context, req server.Request, rsp interface{}) error {
-		err := f(ctx, req, rsp)
-		if grpcErr, ok := err.(app_error.GrpcError); ok {
-			trans := ehm.translatorMiddleware.Get(ctx)
+func (e ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
+	return func(ctx context.Context, request server.Request, response interface{}) error {
+		err := f(ctx, request, response)
+		if grpcErr, ok := errors.Cause(err).(app_error.GrpcError); ok {
+			trans := e.translatorMiddleware.Get(ctx)
 			stt, err := grpcErr.Status(trans)
 			if err != nil {
-				return err
+				panic(errors.WithStack(err))
 			}
 			return stt.Err()
 		}
-		return err
+		if err != nil {
+			panic(errors.WithStack(err))
+		}
+
+		return nil
 	}
 }
 
-func (ehm ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
+func (e ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
 	if err == nil {
 		return
 	}
 
-	if sttErr, ok := err.(statusError); ok {
-		stt := sttErr.GRPCStatus()
+	if stt, ok := status.FromError(errors.Cause(err)); ok {
 		err = app_error.NewStatusError(stt)
 	}
 
-	if businessRuleErr, ok := err.(app_error.BusinessRuleError); ok {
+	if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
 		err = app_error.NewBusinessRuleErrors(businessRuleErr)
 	}
 
-	if webErr, ok := err.(app_error.WebError); ok {
-		trans := ehm.translatorMiddleware.Get(ctx.Request().Context())
+	if webErr, ok := errors.Cause(err).(app_error.WebError); ok {
+		trans := e.translatorMiddleware.Get(ctx.Request().Context())
 		problem, err := webErr.Problem(trans)
-		if err == nil {
-			err = problem
+		if err != nil {
+			panic(errors.WithStack(err))
 		}
+		ctx.Problem(problem)
+		ctx.StopExecution()
 	}
 
-	problem, ok := err.(iris.Problem)
-	if !ok {
-		problem = iris.NewProblem()
-		problem.Type("about:blank")
-		problem.Status(iris.StatusInternalServerError)
-		problem.Title("internal server error")
-		problem.Detail(fmt.Sprintf("%+v", err))
-	}
-
-	ctx.Problem(problem)
-	ctx.StopExecution()
+	panic(errors.WithStack(err))
 }
