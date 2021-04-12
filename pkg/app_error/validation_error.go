@@ -4,12 +4,12 @@ import (
 	"strings"
 
 	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"google.golang.org/genproto/googleapis/rpc/errdetails"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gopkg.in/go-playground/validator.v9"
 )
 
 func NewValidationError(fieldErrors validator.ValidationErrors) AppError {
