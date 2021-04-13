@@ -68,7 +68,7 @@ func (b businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) 
 		}
 
 		violation := &errdetails.PreconditionFailure_Violation{
-			Type:        "business rule",
+			Type:        "BUSINESS_RULE",
 			Description: description,
 		}
 

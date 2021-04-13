@@ -11,10 +11,8 @@ import (
 )
 
 func IsNotFoundError(err error) bool {
-	if _, ok := err.(notFoundError); ok {
-		return true
-	}
-	return false
+	_, ok := err.(notFoundError)
+	return ok
 }
 
 func NewNotFoundError(name string) AppError {
