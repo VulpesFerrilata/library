@@ -21,9 +21,9 @@ func (b businessRuleErrors) Error() string {
 	builder := new(strings.Builder)
 
 	builder.WriteString("the request has violate one or more business rules")
-	for _, businessRuleError := range b {
+	for _, businessRuleErr := range b {
 		builder.WriteString("\n")
-		builder.WriteString(businessRuleError.Error())
+		builder.WriteString(businessRuleErr.Error())
 	}
 
 	return builder.String()
@@ -41,8 +41,8 @@ func (b businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem.Detail(detail)
 
 	var errs []string
-	for _, businessRuleError := range b {
-		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
+	for _, businessRuleErr := range b {
+		businessRuleErrorTrans, err := businessRuleErr.Translate(trans)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
@@ -61,15 +61,15 @@ func (b businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) 
 	stt := status.New(codes.FailedPrecondition, detail)
 
 	preconditionFailure := &errdetails.PreconditionFailure{}
-	for _, businessRuleError := range b {
-		description, err := businessRuleError.Translate(trans)
+	for _, businessRuleErr := range b {
+		businessRuleErrTrans, err := businessRuleErr.Translate(trans)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		violation := &errdetails.PreconditionFailure_Violation{
 			Type:        "BUSINESS_RULE",
-			Description: description,
+			Description: businessRuleErrTrans,
 		}
 
 		preconditionFailure.Violations = append(preconditionFailure.Violations, violation)
@@ -87,13 +87,13 @@ func (b businessRuleErrors) Message(trans ut.Translator) (string, error) {
 		return "", errors.WithStack(err)
 	}
 	builder.WriteString(detail)
-	for _, businessRuleError := range b {
+	for _, businessRuleErr := range b {
 		builder.WriteString("\n")
-		businessRuleErrorTrans, err := businessRuleError.Translate(trans)
+		businessRuleErrTrans, err := businessRuleErr.Translate(trans)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
-		builder.WriteString(businessRuleErrorTrans)
+		builder.WriteString(businessRuleErrTrans)
 	}
 
 	return builder.String(), nil

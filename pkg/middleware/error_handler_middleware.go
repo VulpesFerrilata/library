@@ -5,6 +5,7 @@ import (
 
 	"github.com/VulpesFerrilata/library/pkg/app_error"
 	"github.com/asim/go-micro/v3/server"
+	"github.com/go-playground/validator/v10"
 	"github.com/kataras/iris/v12"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/status"
@@ -48,6 +49,10 @@ func (e ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
 		err = app_error.NewStatusError(stt)
 	}
 
+	if validationErrs, ok := errors.Cause(err).(validator.ValidationErrors); ok {
+		err = app_error.NewValidationError(validationErrs)
+	}
+
 	if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
 		err = app_error.NewBusinessRuleErrors(businessRuleErr)
 	}
@@ -60,6 +65,7 @@ func (e ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
 		}
 		ctx.Problem(problem)
 		ctx.StopExecution()
+		return
 	}
 
 	panic(errors.WithStack(err))

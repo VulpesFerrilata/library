@@ -60,6 +60,7 @@ func (r RecoverMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFu
 		}()
 
 		err = f(ctx, request, response)
-		return err
+
+		return
 	}
 }
