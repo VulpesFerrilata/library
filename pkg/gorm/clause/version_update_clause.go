@@ -110,5 +110,16 @@ func (v versionUpdateClause) ModifyStatement(stmt *gorm.Statement) {
 		stmt.AddClauseIfNotExists(clause.Update{})
 		stmt.AddClause(set)
 		stmt.Build("UPDATE", "SET", "WHERE")
+
+		switch stmt.ReflectValue.Kind() {
+		case reflect.Slice, reflect.Array:
+			for i := 0; i < stmt.ReflectValue.Len(); i++ {
+				value, _ := v.field.ValueOf(stmt.ReflectValue)
+				v.field.Set(stmt.ReflectValue.Index(i), value.(int64)+1)
+			}
+		case reflect.Struct:
+			value, _ := v.field.ValueOf(stmt.ReflectValue)
+			v.field.Set(stmt.ReflectValue, value.(int64)+1)
+		}
 	}
 }
