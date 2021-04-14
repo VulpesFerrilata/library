@@ -10,5 +10,5 @@ type Model struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	Version   version
+	Version   Version
 }

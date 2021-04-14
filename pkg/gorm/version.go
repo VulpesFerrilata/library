@@ -6,31 +6,25 @@ import (
 	"gorm.io/gorm/schema"
 )
 
-type Version interface {
-	schema.CreateClausesInterface
-	schema.UpdateClausesInterface
-	schema.DeleteClausesInterface
-}
+var _ schema.CreateClausesInterface = new(Version)
+var _ schema.UpdateClausesInterface = new(Version)
+var _ schema.DeleteClausesInterface = new(Version)
 
-func NewVersion(value int64) Version {
-	return version(value)
-}
+type Version int64
 
-type version int64
-
-func (v version) CreateClauses(f *schema.Field) []clause.Interface {
+func (v Version) CreateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{
 		clause_custom.NewVersionCreateClause(f),
 	}
 }
 
-func (v version) UpdateClauses(f *schema.Field) []clause.Interface {
+func (v Version) UpdateClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{
 		clause_custom.NewVersionUpdateClause(f),
 	}
 }
 
-func (v version) DeleteClauses(f *schema.Field) []clause.Interface {
+func (v Version) DeleteClauses(f *schema.Field) []clause.Interface {
 	return []clause.Interface{
 		clause_custom.NewVersionDeleteClause(f),
 	}
