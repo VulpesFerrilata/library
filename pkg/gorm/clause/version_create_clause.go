@@ -1,8 +1,6 @@
 package clause
 
 import (
-	"reflect"
-
 	"gorm.io/gorm"
 	"gorm.io/gorm/callbacks"
 	"gorm.io/gorm/clause"
@@ -62,14 +60,5 @@ func (v versionCreateClause) ModifyStatement(stmt *gorm.Statement) {
 		stmt.AddClauseIfNotExists(clause.Insert{})
 		stmt.AddClause(values)
 		stmt.Build("INSERT", "VALUES", "ON CONFLICT")
-
-		switch stmt.ReflectValue.Kind() {
-		case reflect.Slice, reflect.Array:
-			for i := 0; i < stmt.ReflectValue.Len(); i++ {
-				v.field.Set(stmt.ReflectValue.Index(i), 1)
-			}
-		case reflect.Struct:
-			v.field.Set(stmt.ReflectValue, 1)
-		}
 	}
 }
