@@ -12,6 +12,6 @@ func NewTranslationFolderPathFlag() cli.Flag {
 	}
 }
 
-func GetTranslationFolderPath(ctx cli.Context) string {
+func GetTranslationFolderPath(ctx *cli.Context) string {
 	return ctx.String(translationFolderPath)
 }

@@ -16,6 +16,6 @@ func NewSqlDialectFlag() cli.Flag {
 	}
 }
 
-func GetSqlDialect(ctx cli.Context) string {
+func GetSqlDialect(ctx *cli.Context) string {
 	return ctx.String(sqlDialect)
 }
