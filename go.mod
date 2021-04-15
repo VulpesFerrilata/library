@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/asim/go-micro/v3 v3.5.0
+	github.com/go-playground/locales v0.13.0
 	github.com/go-playground/pkg/v5 v5.1.0
 	github.com/go-playground/pure/v5 v5.1.0
 	github.com/go-playground/universal-translator v0.17.0

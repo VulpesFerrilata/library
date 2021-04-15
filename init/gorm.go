@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func InitGorm(sqlDialect string, sqlDsn string) (*gorm.DB, error) {
+func InitGorm(sqlDialect string, sqlDsn string, opts ...gorm.Option) (*gorm.DB, error) {
 	var dialector gorm.Dialector
 	switch strings.ToLower(sqlDialect) {
 	case "mysql":
@@ -21,6 +21,6 @@ func InitGorm(sqlDialect string, sqlDsn string) (*gorm.DB, error) {
 		return nil, errors.WithStack(err)
 	}
 
-	db, err := gorm.Open(dialector, &gorm.Config{})
+	db, err := gorm.Open(dialector, opts...)
 	return db, errors.WithStack(err)
 }
