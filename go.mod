@@ -23,5 +23,7 @@ require (
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
 	google.golang.org/genproto v0.0.0-20191216164720-4f79533eabd1
 	google.golang.org/grpc v1.26.0
+	gorm.io/driver/mysql v1.0.5
+	gorm.io/driver/sqlite v1.1.4
 	gorm.io/gorm v1.21.6
 )
