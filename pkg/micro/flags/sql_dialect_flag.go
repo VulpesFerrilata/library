@@ -7,11 +7,13 @@ import (
 
 const sqlDialect = "sql_dialect"
 
-var SqlDialectFlag = &cli.GenericFlag{
-	Name:    sqlDialect,
-	Value:   generic.NewStringGeneric("mysql", "sqlite"),
-	EnvVars: []string{"MICRO_SQL_DIALECT"},
-	Usage:   "Sql dialect for storing data, currently support sqlite and mysql",
+func NewSqlDialectFlag() cli.Flag {
+	return &cli.GenericFlag{
+		Name:    sqlDialect,
+		Value:   generic.NewStringGeneric("mysql", "sqlite"),
+		EnvVars: []string{"MICRO_SQL_DIALECT"},
+		Usage:   "Sql dialect for storing data, currently support sqlite and mysql",
+	}
 }
 
 func GetSqlDialect(ctx cli.Context) string {
