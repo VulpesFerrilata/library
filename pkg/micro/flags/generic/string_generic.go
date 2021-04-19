@@ -18,7 +18,7 @@ type stringGeneric struct {
 	selected string
 }
 
-func (s stringGeneric) Set(value string) error {
+func (s *stringGeneric) Set(value string) error {
 	for _, enum := range s.enums {
 		if enum == value {
 			s.selected = value
