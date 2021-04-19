@@ -17,5 +17,5 @@ func NewSqlDialectFlag() cli.Flag {
 }
 
 func GetSqlDialect(ctx *cli.Context) string {
-	return ctx.String(sqlDialect)
+	return ctx.Generic(sqlDialect).(cli.Generic).String()
 }
