@@ -24,6 +24,7 @@ type ErrorHandlerMiddleware struct {
 func (e ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFunc {
 	return func(ctx context.Context, request server.Request, response interface{}) error {
 		err := f(ctx, request, response)
+
 		if grpcErr, ok := errors.Cause(err).(app_error.GrpcError); ok {
 			trans := e.translatorMiddleware.Get(ctx)
 			stt, err := grpcErr.Status(trans)

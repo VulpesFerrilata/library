@@ -7,7 +7,6 @@ import (
 	"github.com/asim/go-micro/v3/server"
 	"github.com/kataras/iris/v12"
 	iris_context "github.com/kataras/iris/v12/context"
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -40,10 +39,7 @@ func (t TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.H
 				panic(r)
 			}
 
-			err := tx.Commit().Error
-			if err != nil {
-				panic(errors.WithStack(err))
-			}
+			tx.Commit()
 		}()
 
 		requestCtx = context.WithValue(requestCtx, transactionKey{}, tx)
@@ -75,10 +71,7 @@ func (t TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOption
 					panic(r)
 				}
 
-				err := tx.Commit().Error
-				if err != nil {
-					panic(errors.WithStack(err))
-				}
+				tx.Commit()
 			}()
 
 			ctx = context.WithValue(ctx, transactionKey{}, tx)
