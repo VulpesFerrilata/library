@@ -39,7 +39,16 @@ func (t TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.H
 				panic(r)
 			}
 
-			tx.Commit()
+			statusCode := ctx.GetStatusCode()
+			if iris_context.StatusCodeNotSuccessful(statusCode) {
+				tx.Rollback()
+			} else {
+				err := tx.Commit().Error
+				if err != nil {
+					panic(err)
+				}
+			}
+
 		}()
 
 		requestCtx = context.WithValue(requestCtx, transactionKey{}, tx)
@@ -47,11 +56,6 @@ func (t TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.H
 		ctx.ResetRequest(request)
 
 		ctx.Next()
-
-		statusCode := ctx.GetStatusCode()
-		if iris_context.StatusCodeNotSuccessful(statusCode) {
-			tx.Rollback()
-		}
 	}
 }
 
@@ -62,7 +66,7 @@ func (t TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOption
 	}
 
 	return func(f server.HandlerFunc) server.HandlerFunc {
-		return func(ctx context.Context, request server.Request, response interface{}) error {
+		return func(ctx context.Context, request server.Request, response interface{}) (err error) {
 			tx := t.db.WithContext(ctx).Begin(opt)
 
 			defer func() {
@@ -71,18 +75,18 @@ func (t TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOption
 					panic(r)
 				}
 
-				tx.Commit()
+				if err != nil {
+					tx.Rollback()
+				} else {
+					err = tx.Commit().Error
+				}
 			}()
 
 			ctx = context.WithValue(ctx, transactionKey{}, tx)
 
-			err := f(ctx, request, response)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
+			err = f(ctx, request, response)
 
-			return nil
+			return
 		}
 	}
 }

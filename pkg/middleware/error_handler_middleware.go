@@ -25,6 +25,18 @@ func (e ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.Hand
 	return func(ctx context.Context, request server.Request, response interface{}) error {
 		err := f(ctx, request, response)
 
+		if err == nil {
+			return nil
+		}
+
+		if validationErrs, ok := errors.Cause(err).(validator.ValidationErrors); ok {
+			err = app_error.NewValidationError(validationErrs)
+		}
+
+		if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
+			err = app_error.NewBusinessRuleErrors(businessRuleErr)
+		}
+
 		if grpcErr, ok := errors.Cause(err).(app_error.GrpcError); ok {
 			trans := e.translatorMiddleware.Get(ctx)
 			stt, err := grpcErr.Status(trans)
@@ -33,11 +45,8 @@ func (e ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.Hand
 			}
 			return stt.Err()
 		}
-		if err != nil {
-			panic(errors.WithStack(err))
-		}
 
-		return nil
+		panic(errors.WithStack(err))
 	}
 }
 
