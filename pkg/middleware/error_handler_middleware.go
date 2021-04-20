@@ -34,7 +34,7 @@ func (e ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.Hand
 		}
 
 		if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
-			err = app_error.NewBusinessRuleErrors(businessRuleErr)
+			err = businessRuleErr.ToBusinessRuleErrors()
 		}
 
 		if grpcErr, ok := errors.Cause(err).(app_error.GrpcError); ok {
