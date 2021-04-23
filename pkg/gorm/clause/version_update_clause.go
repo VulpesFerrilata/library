@@ -114,7 +114,7 @@ func (v versionUpdateClause) ModifyStatement(stmt *gorm.Statement) {
 		switch stmt.ReflectValue.Kind() {
 		case reflect.Slice, reflect.Array:
 			for i := 0; i < stmt.ReflectValue.Len(); i++ {
-				value, isZero := v.field.ValueOf(stmt.ReflectValue)
+				value, isZero := v.field.ValueOf(stmt.ReflectValue.Index(i))
 				if !isZero {
 					v.field.Set(stmt.ReflectValue.Index(i), value.(int64)+1)
 				}
