@@ -25,28 +25,20 @@ func (e ErrorHandlerMiddleware) HandlerWrapper(f server.HandlerFunc) server.Hand
 	return func(ctx context.Context, request server.Request, response interface{}) error {
 		err := f(ctx, request, response)
 
-		if err == nil {
-			return nil
-		}
-
 		if validationErrs, ok := errors.Cause(err).(validator.ValidationErrors); ok {
 			err = app_error.NewValidationError(validationErrs)
-		}
-
-		if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
-			err = businessRuleErr.ToBusinessRuleErrors()
 		}
 
 		if grpcErr, ok := errors.Cause(err).(app_error.GrpcError); ok {
 			trans := e.translatorMiddleware.Get(ctx)
 			stt, err := grpcErr.Status(trans)
 			if err != nil {
-				panic(errors.WithStack(err))
+				return errors.WithStack(err)
 			}
 			return stt.Err()
 		}
 
-		panic(errors.WithStack(err))
+		return errors.WithStack(err)
 	}
 }
 
@@ -61,10 +53,6 @@ func (e ErrorHandlerMiddleware) ErrorHandler(ctx iris.Context, err error) {
 
 	if validationErrs, ok := errors.Cause(err).(validator.ValidationErrors); ok {
 		err = app_error.NewValidationError(validationErrs)
-	}
-
-	if businessRuleErr, ok := errors.Cause(err).(app_error.BusinessRuleError); ok {
-		err = app_error.NewBusinessRuleErrors(businessRuleErr)
 	}
 
 	if webErr, ok := errors.Cause(err).(app_error.WebError); ok {

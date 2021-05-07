@@ -79,6 +79,9 @@ func (t TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOption
 					tx.Rollback()
 				} else {
 					err = tx.Commit().Error
+					if err != nil {
+						panic(err)
+					}
 				}
 			}()
 

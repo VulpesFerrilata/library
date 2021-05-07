@@ -11,25 +11,25 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func NewBusinessRuleErrors() WithDetailAppError {
-	return &businessRuleErrors{
+func NewAuthenticationErrors() WithDetailAppError {
+	return &authenticationErrors{
 		detailErrs: make([]DetailError, 0),
 	}
 }
 
-type businessRuleErrors struct {
+type authenticationErrors struct {
 	detailErrs []DetailError
 }
 
-func (b *businessRuleErrors) AddDetailError(detailErr DetailError) {
-	b.detailErrs = append(b.detailErrs, detailErr)
+func (a *authenticationErrors) AddDetailError(detailErr DetailError) {
+	a.detailErrs = append(a.detailErrs, detailErr)
 }
 
-func (b businessRuleErrors) Error() string {
+func (a authenticationErrors) Error() string {
 	builder := new(strings.Builder)
 
-	builder.WriteString("the request has violate one or more business rules")
-	for _, detailErr := range b.detailErrs {
+	builder.WriteString("authentication failed")
+	for _, detailErr := range a.detailErrs {
 		builder.WriteString("\n")
 		builder.WriteString(detailErr.Error())
 	}
@@ -37,47 +37,47 @@ func (b businessRuleErrors) Error() string {
 	return builder.String()
 }
 
-func (b businessRuleErrors) Problem(trans ut.Translator) (iris.Problem, error) {
+func (a authenticationErrors) Problem(trans ut.Translator) (iris.Problem, error) {
 	problem := iris.NewProblem()
 	problem.Type("about:blank")
 
 	problem.Status(iris.StatusUnprocessableEntity)
-	detail, err := trans.T("business-rule-error")
+	detail, err := trans.T("authentication-error")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 	problem.Detail(detail)
 
 	var errs []string
-	for _, detailErr := range b.detailErrs {
-		detailErrTrans, err := detailErr.Translate(trans)
+	for _, detailErr := range a.detailErrs {
+		authenticationErrTrans, err := detailErr.Translate(trans)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		errs = append(errs, detailErrTrans)
+		errs = append(errs, authenticationErrTrans)
 	}
 	problem.Key("errors", errs)
 
 	return problem, nil
 }
 
-func (b businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) {
-	detail, err := trans.T("business-rule-error")
+func (a authenticationErrors) Status(trans ut.Translator) (*status.Status, error) {
+	detail, err := trans.T("authentication-error")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
-	stt := status.New(codes.FailedPrecondition, detail)
+	stt := status.New(codes.Unauthenticated, detail)
 
 	preconditionFailure := &errdetails.PreconditionFailure{}
-	for _, detailErr := range b.detailErrs {
-		detailErrTrans, err := detailErr.Translate(trans)
+	for _, detailErr := range a.detailErrs {
+		authenticationErrTrans, err := detailErr.Translate(trans)
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
 
 		violation := &errdetails.PreconditionFailure_Violation{
-			Type:        "BUSINESS_RULE",
-			Description: detailErrTrans,
+			Type:        "AUTHENTICATION",
+			Description: authenticationErrTrans,
 		}
 
 		preconditionFailure.Violations = append(preconditionFailure.Violations, violation)
@@ -87,21 +87,21 @@ func (b businessRuleErrors) Status(trans ut.Translator) (*status.Status, error) 
 	return stt, errors.WithStack(err)
 }
 
-func (b businessRuleErrors) Message(trans ut.Translator) (string, error) {
+func (a authenticationErrors) Message(trans ut.Translator) (string, error) {
 	builder := new(strings.Builder)
 
-	detail, err := trans.T("business-rule-error")
+	detail, err := trans.T("authentication-error")
 	if err != nil {
 		return "", errors.WithStack(err)
 	}
 	builder.WriteString(detail)
-	for _, detailErr := range b.detailErrs {
+	for _, detailErr := range a.detailErrs {
 		builder.WriteString("\n")
-		detailErrTrans, err := detailErr.Translate(trans)
+		authenticationErrTrans, err := detailErr.Translate(trans)
 		if err != nil {
 			return "", errors.WithStack(err)
 		}
-		builder.WriteString(detailErrTrans)
+		builder.WriteString(authenticationErrTrans)
 	}
 
 	return builder.String(), nil

@@ -49,14 +49,14 @@ func (r RecoverMiddleware) HandlerWrapper(f server.HandlerFunc) server.HandlerFu
 				} else {
 					err = r.(error)
 				}
-
-				stt, ok := status.FromError(errors.Cause(err))
-				if !ok {
-					stt = status.New(codes.Internal, fmt.Sprintf("%+v", err))
-				}
-
-				err = stt.Err()
 			}
+
+			stt, ok := status.FromError(errors.Cause(err))
+			if !ok {
+				stt = status.New(codes.Internal, fmt.Sprintf("%+v", err))
+			}
+
+			err = stt.Err()
 		}()
 
 		err = f(ctx, request, response)
