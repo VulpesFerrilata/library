@@ -25,6 +25,10 @@ func (a *authenticationErrors) AddDetailError(detailErr DetailError) {
 	a.detailErrs = append(a.detailErrs, detailErr)
 }
 
+func (a authenticationErrors) HasErrors() bool {
+	return len(a.detailErrs) > 0
+}
+
 func (a authenticationErrors) Error() string {
 	builder := new(strings.Builder)
 
