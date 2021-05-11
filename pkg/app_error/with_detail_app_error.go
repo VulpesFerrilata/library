@@ -4,4 +4,5 @@ type WithDetailAppError interface {
 	error
 	AppError
 	AddDetailError(detailErr DetailError)
+	HasErrors() bool
 }

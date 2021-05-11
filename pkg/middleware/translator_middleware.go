@@ -27,14 +27,14 @@ type TranslatorMiddleware struct {
 
 func (t TranslatorMiddleware) Serve(ctx iris.Context) {
 	request := ctx.Request()
-
 	requestCtx := request.Context()
 	languages := pure.AcceptedLanguages(request)
 	trans, _ := t.utrans.FindTranslator(languages...)
-	requestCtx = context.WithValue(requestCtx, translatorKey{}, trans)
-	request.WithContext(requestCtx)
 
+	requestCtx = context.WithValue(requestCtx, translatorKey{}, trans)
+	request = request.WithContext(requestCtx)
 	ctx.ResetRequest(request)
+
 	ctx.Next()
 }
 

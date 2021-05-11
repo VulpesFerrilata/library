@@ -52,7 +52,7 @@ func (t TransactionMiddleware) ServeWithTxOptions(opts ...*sql.TxOptions) iris.H
 		}()
 
 		requestCtx = context.WithValue(requestCtx, transactionKey{}, tx)
-		request.WithContext(requestCtx)
+		request = request.WithContext(requestCtx)
 		ctx.ResetRequest(request)
 
 		ctx.Next()
@@ -79,9 +79,6 @@ func (t TransactionMiddleware) HandlerWrapperWithTxOptions(opts ...*sql.TxOption
 					tx.Rollback()
 				} else {
 					err = tx.Commit().Error
-					if err != nil {
-						panic(err)
-					}
 				}
 			}()
 

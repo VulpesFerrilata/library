@@ -25,6 +25,10 @@ func (b *businessRuleErrors) AddDetailError(detailErr DetailError) {
 	b.detailErrs = append(b.detailErrs, detailErr)
 }
 
+func (b businessRuleErrors) HasErrors() bool {
+	return len(b.detailErrs) > 0
+}
+
 func (b businessRuleErrors) Error() string {
 	builder := new(strings.Builder)
 
