@@ -11,7 +11,7 @@ import (
 )
 
 func IsRecordNotFoundError(err error) bool {
-	_, ok := err.(recordNotFoundError)
+	_, ok := errors.Cause(err).(recordNotFoundError)
 	return ok
 }
 
